@@ -87,3 +87,18 @@ This repository contains the implementation of BERT from scratch, training it on
    ```bash
    git clone https://github.com/your-username/bert-implementation.git
    cd bert-implementation
+# Text Similarity with BERT
+
+This project demonstrates the use of a pre-trained BERT model to calculate the cosine similarity between two sentences. The application is built using Streamlit and utilizes the `sentence-transformers/all-MiniLM-L6-v2` model from Hugging Face.
+
+## Features
+
+- Calculate cosine similarity between two sentences using a pre-trained BERT model.
+- Simple and interactive web interface built with Streamlit.
+
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/text-similarity-with-bert.git
+   cd text-similarity-with-bert
