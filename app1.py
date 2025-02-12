@@ -1,6 +1,7 @@
 import streamlit as st
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import numpy as np
 
 # Set device for computation (GPU if available, otherwise CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,8 +30,8 @@ sentence_b = st.text_input("Enter the second sentence:")
 if st.button("Classify NLI"):
     if sentence_a and sentence_b:
         result = classify_nli(model, tokenizer, sentence_a, sentence_b, device)
-        st.write(f"Entailment: {result['Entailment']:.4f}")
-        st.write(f"Neutral: {result['Neutral']:.4f}")
-        st.write(f"Contradiction: {result['Contradiction']:.4f}")
+        st.write(f"Entailment: {result.get('Entailment', 0.0):.4f}")
+        st.write(f"Neutral: {result.get('Neutral', 0.0):.4f}")
+        st.write(f"Contradiction: {result.get('Contradiction', 0.0):.4f}")
     else:
         st.write("Please enter both sentences to classify NLI.")
