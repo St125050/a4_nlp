@@ -1,14 +1,12 @@
 import streamlit as st
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from sklearn.metrics.pairwise import cosine_similarity
-from bert_model import mean_pool
 
 # Set device for computation (GPU if available, otherwise CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load the pre-trained model and tokenizer from Hugging Face
-model_name = 'sentence-transformers/all-MiniLM-L6-v2'
+model_name = 'roberta-large-mnli'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
@@ -18,7 +16,7 @@ def classify_nli(model, tokenizer, sentence_a, sentence_b, device):
         outputs = model(**inputs)
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=1)[0]
-    labels = ['Entailment', 'Neutral', 'Contradiction']
+    labels = ['Contradiction', 'Neutral', 'Entailment']
     result = {label: prob.item() for label, prob in zip(labels, probabilities)}
     return result
 
