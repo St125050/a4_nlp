@@ -1,42 +1,48 @@
 import streamlit as st
-import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Set device for computation (GPU if available, otherwise CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Load pre-trained model and tokenizer from Hugging Face
+tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-MiniLM-L6-v2')
+model = AutoModelForSequenceClassification.from_pretrained('textattack/bert-base-uncased-snli')
 
-# Load the pre-trained model and tokenizer from Hugging Face
-model_name = 'roberta-large-mnli'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
-
-def classify_nli(model, tokenizer, sentence_a, sentence_b, device):
-    inputs = tokenizer(sentence_a, sentence_b, return_tensors='pt', max_length=128, truncation=True, padding='max_length').to(device)
+# Function to preprocess and get sentence embeddings
+def get_sentence_embedding(sentence):
+    inputs = tokenizer(sentence, return_tensors='pt', padding=True, truncation=True, max_length=512)
     with torch.no_grad():
-        outputs = model(**inputs)
-    logits = outputs.logits
-    probabilities = torch.softmax(logits, dim=1)[0]
+        model_output = model(**inputs)
+    embeddings = model_output[0][:, 0, :].squeeze().numpy()  # Extract embeddings from the [CLS] token
+    return embeddings
+
+# Function to compute similarity and predict NLI
+def predict_nli(premise, hypothesis):
+    premise_embedding = get_sentence_embedding(premise)
+    hypothesis_embedding = get_sentence_embedding(hypothesis)
     
-    # Mapping indices to NLI labels
-    labels = ['contradiction', 'neutral', 'entailment']
-    result = {labels[i]: probabilities[i].item() for i in range(len(labels))}
+    # Cosine similarity between the sentence embeddings
+    similarity = cosine_similarity([premise_embedding], [hypothesis_embedding])[0][0]
     
-    return result
+    # Predicted NLI labels based on cosine similarity
+    if similarity > 0.7:
+        return "Entailment"
+    elif similarity > 0.3:
+        return "Neutral"
+    else:
+        return "Contradiction"
 
-# Streamlit App
-st.title("NLI with BERT")
+# Streamlit UI for input and displaying results
+st.title("Text Similarity and NLI Prediction")
+st.write("Enter two sentences below to predict their relationship (Entailment, Neutral, or Contradiction).")
 
-# Inputs for sentences
-sentence_a = st.text_input("Enter the first sentence:")
-sentence_b = st.text_input("Enter the second sentence:")
+premise = st.text_input("Premise Sentence", "")
+hypothesis = st.text_input("Hypothesis Sentence", "")
 
-# Ensure the button only works when both sentences are provided
-if sentence_a and sentence_b:
-    if st.button("Classify NLI"):
-        # If both sentences are available, classify NLI
-        result = classify_nli(model, tokenizer, sentence_a, sentence_b, device)
-        st.write(f"Entailment: {result['entailment']:.4f}")
-        st.write(f"Neutral: {result['neutral']:.4f}")
-        st.write(f"Contradiction: {result['contradiction']:.4f}")
-else:
-    st.write("Please enter both sentences to classify NLI.")
+if st.button("Predict"):
+    if premise and hypothesis:
+        result = predict_nli(premise, hypothesis)
+        st.write(f"Prediction: **{result}**")
+    else:
+        st.write("Please enter both sentences for prediction.")
+
