@@ -1,4 +1,25 @@
 # a4_nlp
+# Text Similarity Web Application
+
+This is a simple web application that demonstrates the capabilities of a custom-trained sentence transformer model for Natural Language Inference (NLI).
+
+## Deployment
+
+You can access the deployed web application using the following link:
+
+[Text Similarity Web Application](https://vlxrdb4caajgcxfdhd32u6.streamlit.app/)
+
+## Description
+
+- **Inputs**: Two text boxes where users can enter search queries or sentences.
+- **Outputs**: The app will predict the relationship between the two sentences (Entailment, Neutral, Contradiction).
+
+## How to Run Locally
+
+1. Clone this repository:
+   ```bash
+   git clone <repository-url>
+
 # BERT and Sentence-BERT Implementation
 
 This repository contains the implementation of BERT from scratch, training it on a suitable dataset, and then fine-tuning Sentence-BERT to derive semantically meaningful sentence embeddings. The project follows the tasks outlined below:
