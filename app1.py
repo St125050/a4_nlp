@@ -16,13 +16,15 @@ def classify_nli(model, tokenizer, sentence_a, sentence_b, device):
         outputs = model(**inputs)
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=1)[0]
+    
+    # Mapping indices to NLI labels
     labels = ['contradiction', 'neutral', 'entailment']
+    result = {labels[i]: probabilities[i].item() for i in range(len(labels))}
     
     # Debugging information
     st.write("Logits:", logits)
     st.write("Probabilities:", probabilities)
     
-    result = {label: prob.item() for label, prob in zip(labels, probabilities)}
     return result
 
 # Streamlit App
