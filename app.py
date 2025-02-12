@@ -2,7 +2,7 @@ import streamlit as st
 import torch
 from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics.pairwise import cosine_similarity
-from model.bert_model import mean_pool
+from bert_model import mean_pool
 
 # Set device for computation (GPU if available, otherwise CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
