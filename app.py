@@ -1,42 +1,42 @@
 import streamlit as st
-import torch
-from transformers import AutoTokenizer, AutoModel
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-from bert_model import mean_pool
 
-# Set device for computation (GPU if available, otherwise CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Load pre-trained model from Sentence-Transformers
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Load the pre-trained model and tokenizer from Hugging Face
-model_name = 'sentence-transformers/all-MiniLM-L6-v2'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name).to(device)
+# Function to get sentence embeddings
+def get_sentence_embedding(sentence):
+    # Get the embedding of the sentence
+    embedding = model.encode([sentence])[0]
+    return embedding
 
-def calculate_similarity(model, tokenizer, sentence_a, sentence_b, device):
-    inputs_a = tokenizer(sentence_a, return_tensors='pt', max_length=128, truncation=True, padding='max_length').to(device)
-    inputs_b = tokenizer(sentence_b, return_tensors='pt', max_length=128, truncation=True, padding='max_length').to(device)
-    inputs_ids_a = inputs_a['input_ids']
-    attention_a = inputs_a['attention_mask']
-    inputs_ids_b = inputs_b['input_ids']
-    attention_b = inputs_b['attention_mask']
-
-    with torch.no_grad():
-        u = model(**inputs_a).last_hidden_state
-        v = model(**inputs_b).last_hidden_state
-    u = mean_pool(u, attention_a).cpu().numpy().reshape(-1)
-    v = mean_pool(v, attention_b).cpu().numpy().reshape(-1)
-    similarity_score = cosine_similarity(u.reshape(1, -1), v.reshape(1, -1))[0, 0]
-    return similarity_score
-
-# Streamlit App
-st.title("Text Similarity with BERT")
-
-sentence_a = st.text_input("Enter the first sentence:")
-sentence_b = st.text_input("Enter the second sentence:")
-
-if st.button("Calculate Similarity"):
-    if sentence_a and sentence_b:
-        similarity = calculate_similarity(model, tokenizer, sentence_a, sentence_b, device)
-        st.write(f"Cosine Similarity: {similarity:.4f}")
+# Function to compute similarity and predict NLI
+def predict_nli(premise, hypothesis):
+    premise_embedding = get_sentence_embedding(premise)
+    hypothesis_embedding = get_sentence_embedding(hypothesis)
+    
+    # Cosine similarity between the sentence embeddings
+    similarity = cosine_similarity([premise_embedding], [hypothesis_embedding])[0][0]
+    
+    # Predicted NLI labels based on cosine similarity
+    if similarity > 0.7:
+        return "Entailment"
+    elif similarity > 0.3:
+        return "Neutral"
     else:
-        st.write("Please enter both sentences to calculate similarity.")
+        return "Contradiction"
+
+# Streamlit UI for input and displaying results
+st.title("Text Similarity and NLI Prediction")
+st.write("Enter two sentences below to predict their relationship (Entailment, Neutral, or Contradiction).")
+
+premise = st.text_input("Premise Sentence", "")
+hypothesis = st.text_input("Hypothesis Sentence", "")
+
+if st.button("Predict"):
+    if premise and hypothesis:
+        result = predict_nli(premise, hypothesis)
+        st.write(f"Prediction: **{result}**")
+    else:
+        st.write("Please enter both sentences for prediction.")
