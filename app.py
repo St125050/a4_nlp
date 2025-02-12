@@ -1,12 +1,15 @@
 import streamlit as st
 import torch
 from transformers import AutoTokenizer
+from sklearn.metrics.pairwise import cosine_similarity
 from model.bert_model import BERT, mean_pool
 
-# Load the trained model and tokenizer
+# Set device for computation (GPU if available, otherwise CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load the trained model and tokenizer
 model_path = 'bert.pt'
-params, state = torch.load(model_path)
+params, state = torch.load(model_path, map_location=device)
 model = BERT(**params, device=device).to(device)
 model.load_state_dict(state)
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
